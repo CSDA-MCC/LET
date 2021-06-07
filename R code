@@ -195,3 +195,5 @@ colnames(DDDist) = names( table(df$class) )
 ######################################################################
 h = hclust( as.dist(DDDist), method = "ward.D2")
 plot( h, hang = -1, xlab = "", main = "label embedding tree")
+
+
