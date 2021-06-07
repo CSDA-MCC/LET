@@ -1,0 +1,49 @@
+library(compiler)
+GetEntropy = function(X, Y){
+  N = length(Y) 
+  base = Y 
+  comp = X
+  cut2 = length(table(comp))
+  levels(comp) <- c(1:cut2)
+  comp_order = unique(table(comp))
+  size2 = as.numeric(unname(table(comp)))
+  p_each_group = sapply(1:cut2,function(x){return(table(base[which(comp==x)])/size2[x])})   
+  base_entropy = sum(-(unname(table(base))/N)*log((unname(table(base))/N)))
+  
+  if (is.matrix(p_each_group)){
+    entropy.part = apply(p_each_group,2,function(x){return(sum(-x*log(x),na.rm = TRUE))})
+    weighted.part = size2/N*entropy.part
+    entropy.temp = sum(weighted.part)
+  }
+  if (is.list(p_each_group)){
+    entropy.part = unlist(lapply(p_each_group,function(x){return(sum(-x*log(x)))}))
+    weighted.part = size2/N*entropy.part
+    entropy.temp = sum(weighted.part)
+  }
+  return(list(jointentropy = entropy.temp, 
+  ratio = entropy.temp/base_entropy ,
+  grouptable=table(base,comp),
+  branchorder=comp_order,
+  branchsize = size2[comp_order],
+  entropies = entropy.part[comp_order],
+  w.entropies=weighted.part[comp_order], 
+  weight = (size2/N)[comp_order]))
+}
+GetEntropy = cmpfun(GetEntropy)
+
+# by average
+ConditionalEntropy <- matrix(0,ncol(df),ncol(df))
+for(i in 1:ncol(df)){
+  for(j in 1:ncol(df)){
+    ConditionalEntropy[i,j] = ( GetEntropy(df[,i],df[,j])$ratio + GetEntropy(df[,j],df[,i])$ratio )/2  
+  }
+}
+
+# minimum
+ConditionalEntropy2 <- matrix(0,ncol(df),ncol(df))
+for(i in 1:ncol(df)){
+  for(j in 1:ncol(df)){
+    ConditionalEntropy2[i,j] = min( GetEntropy(df[,i],df[,j])$ratio,GetEntropy(df[,j],df[,i])$ratio ) 
+  }
+}
+
